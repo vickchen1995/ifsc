@@ -1,8 +1,11 @@
-module github.com/razorpay/ifsc/v2
+module github.com/vickchen1995/ifsc/v2
 
 go 1.18
 
-require github.com/stretchr/testify v1.8.0
+require (
+	github.com/razorpay/ifsc/v2 v2.0.52
+	github.com/stretchr/testify v1.8.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

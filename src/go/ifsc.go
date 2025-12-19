@@ -16,6 +16,7 @@ var ifscMap map[string][]Data
 var bankNames map[string]string
 var sublet map[string]string
 var customSublets map[string]string
+var bankCodesMap map[string][]string
 
 type Data struct {
 	Value string
@@ -61,6 +62,7 @@ func init() {
 			log.Panic(fmt.Sprintf("there is some error in banknames.json file: %v", err))
 		}
 	}
+	bankCodesMap = generateBankCodesMap()
 }
 
 func LoadFile(fileName string, result interface{}, fullDirPath string) error {
@@ -164,4 +166,57 @@ func getCustomSubletName(code string) (string, error) {
 func ValidateBankCode(bankCodeInput string) bool {
 	_, ok := bankCodes[bankCodeInput]
 	return ok
+}
+
+func generateBankCodesMap() map[string][]string {
+	result := make(map[string][]string)
+	for bankCode, bankName := range bankNames {
+		result[bankName] = append(result[bankName], bankCode)
+	}
+	return result
+}
+
+func GetBankCodes(bankName string) ([]string, error) {
+	codes, ok := bankCodesMap[bankName]
+	if !ok {
+		return nil, errors.New("bank name not found")
+	}
+	return codes, nil
+}
+
+func GetIFSCsByBankName(bankName string) ([]string, error) {
+	bankCodes, err := GetBankCodes(bankName)
+	if err != nil {
+		return nil, err
+	}
+
+	var ifscCodes []string
+	for _, bankCode := range bankCodes {
+		bankDetails := GetBankDetails(bankCode)
+		if bankDetails != nil && bankDetails.IFSC != "" {
+			ifscCodes = append(ifscCodes, bankDetails.IFSC)
+		}
+	}
+
+	return ifscCodes, nil
+}
+
+func ValidateIFSCForBank(bankName string, ifscCode string) (bool, error) {
+	if !Validate(ifscCode) {
+		return false, errors.New("invalid IFSC code format")
+	}
+
+	bankCodeList, err := GetBankCodes(bankName)
+	if err != nil {
+		return false, err
+	}
+
+	ifscBankCode := strings.ToUpper(ifscCode[0:4])
+	for _, bankCode := range bankCodeList {
+		if bankCode == ifscBankCode {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

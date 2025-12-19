@@ -45,3 +45,7 @@ func GetBankDetails(bankCode string) *Bank {
 	}
 	return &data
 }
+
+func GetBankData() map[string]Bank {
+	return bankData
+}
