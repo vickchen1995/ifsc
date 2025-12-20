@@ -171,13 +171,15 @@ func ValidateBankCode(bankCodeInput string) bool {
 func generateBankCodesMap() map[string][]string {
 	result := make(map[string][]string)
 	for bankCode, bankName := range bankNames {
-		result[bankName] = append(result[bankName], bankCode)
+		lowerBankName := strings.ToLower(bankName)
+		result[lowerBankName] = append(result[lowerBankName], bankCode)
 	}
 	return result
 }
 
 func GetBankCodes(bankName string) ([]string, error) {
-	codes, ok := bankCodesMap[bankName]
+	lowerBankName := strings.ToLower(bankName)
+	codes, ok := bankCodesMap[lowerBankName]
 	if !ok {
 		return nil, errors.New("bank name not found")
 	}

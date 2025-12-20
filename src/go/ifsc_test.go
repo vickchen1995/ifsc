@@ -1,6 +1,9 @@
 package ifsc
 
 import (
+	"bufio"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -116,4 +119,59 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateIFSCForBankFromFile(t *testing.T) {
+	file, err := os.Open("test.txt")
+	if err != nil {
+		t.Fatalf("failed to open test.txt: %v", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	lineNum := 0
+	failedCount := 0
+
+	type BankPair struct {
+		Expected string
+		Actual   string
+	}
+	bankPairsMap := make(map[string]BankPair)
+
+	for scanner.Scan() {
+		lineNum++
+		line := scanner.Text()
+		parts := strings.Split(line, ",")
+		if len(parts) != 2 {
+			continue
+		}
+
+		ifscCode := strings.TrimSpace(parts[0])
+		expectedBankName := strings.TrimSpace(parts[1])
+
+		isValid, err := ValidateIFSCForBank(expectedBankName, ifscCode)
+
+		if err != nil || !isValid {
+			failedCount++
+			actualBankName, nameErr := GetBankName(ifscCode)
+			if nameErr == nil {
+				key := expectedBankName + "|" + actualBankName
+				bankPairsMap[key] = BankPair{
+					Expected: expectedBankName,
+					Actual:   actualBankName,
+				}
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("error reading test.txt: %v", err)
+	}
+
+	t.Logf("Total lines processed: %d, Failed validations: %d", lineNum, failedCount)
+	t.Logf("\n=== Unique Bank Name Mismatches ===")
+	for _, pair := range bankPairsMap {
+		t.Logf("Expected: '%s' -> Actual: '%s'", pair.Expected, pair.Actual)
+	}
+	t.Logf("Total unique mismatches: %d", len(bankPairsMap))
 }
