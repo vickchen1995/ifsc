@@ -1,16 +1,17 @@
 package ifsc
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"path"
-	"runtime"
 	"strconv"
 	"strings"
 )
+
+//go:embed IFSC.json banknames.json banks.json sublet.json custom-sublets.json
+var embeddedFiles embed.FS
 
 var ifscMap map[string][]Data
 var bankNames map[string]string
@@ -66,20 +67,17 @@ func init() {
 }
 
 func LoadFile(fileName string, result interface{}, fullDirPath string) error {
-	_, fileN, _, ok := runtime.Caller(0)
-	if !ok {
-		return errors.New("it was not possible to recover the information. Caller function error")
-	}
-	dir, _ := path.Split(fileN)
-	jsonDir := path.Join(dir, "..")
-	var completePath string
-	if fullDirPath != "" {
-		completePath = path.Join(fullDirPath, fileName)
-	} else {
-		completePath = path.Join(jsonDir, fileName)
+	var bytes []byte
+	var err error
 
+	if fullDirPath != "" {
+		// For custom paths, still use file system
+		bytes, err = embeddedFiles.ReadFile(fullDirPath + "/" + fileName)
+	} else {
+		// Read from embedded filesystem
+		bytes, err = embeddedFiles.ReadFile(fileName)
 	}
-	bytes, err := ioutil.ReadFile(completePath)
+
 	if err != nil {
 		return err
 	}
