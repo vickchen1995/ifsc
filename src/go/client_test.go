@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/razorpay/ifsc/v2/src/go/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/vickchen1995/ifsc/v2/src/go/mocks"
 )
 
 func getIfscResponse() *IFSCResponse {
